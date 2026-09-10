@@ -1,6 +1,6 @@
 import { HttpStatus } from '@nestjs/common';
 
-interface Product {
+export interface ResponseProductDto {
   id: number;
   name: string;
   price: number;
@@ -8,9 +8,22 @@ interface Product {
   updatedAt: Date;
 }
 
-export interface ProductResponse {
+export interface ResponseSingleProductDto {
   statusCode: HttpStatus;
   message: string;
-  data: Product | Product[];
+  data: ResponseProductDto;
   count?: number;
+}
+
+export interface ResponseProductList {
+  statusCode: HttpStatus.OK;
+  data: ResponseProductDto[];
+  meta: {
+    totalItems: number;
+    page: number;
+    limit: number | undefined;
+    totalPages: number | undefined;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
 }
