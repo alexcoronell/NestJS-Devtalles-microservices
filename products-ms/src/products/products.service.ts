@@ -64,14 +64,14 @@ export class ProductsService {
   }
 
   async update(
-    id: number,
     updateProductDto: UpdateProductDto,
   ): Promise<ResponseSingleProductDto> {
+    const { id, ...data } = updateProductDto;
     const product = await this.productRepository.findOne({ where: { id } });
     if (!product) {
       throw new Error('Product not found');
     }
-    Object.assign(product, updateProductDto);
+    Object.assign(product, data);
     const updatedProduct = await this.productRepository.save(product);
     return {
       statusCode: HttpStatus.OK,
