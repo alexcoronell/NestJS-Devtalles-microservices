@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -83,7 +85,13 @@ export class ProductsService {
     if (!product) {
       throw new Error('Product not found');
     }
-    await this.productRepository.remove(product);
+    const changes = {
+      isDeleted: true,
+      deletedAt: new Date(),
+    };
+
+    this.productRepository.merge(product, changes);
+    await this.productRepository.save(product);
     return {
       statusCode: HttpStatus.NO_CONTENT,
       message: 'Product removed successfully',

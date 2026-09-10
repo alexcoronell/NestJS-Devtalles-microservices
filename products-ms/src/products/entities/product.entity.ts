@@ -23,6 +23,14 @@ export class Product {
   @UpdateDateColumn({ name: 'updated_at' })
   public updatedAt: Date;
 
+  @Column({
+    name: 'deleted_at',
+    type: 'datetime',
+    nullable: true,
+    default: null,
+  })
+  public deletedAt: Date | null;
+
   @Column({ name: 'is_deleted', nullable: true, default: false })
   public isDeleted: boolean;
 }
