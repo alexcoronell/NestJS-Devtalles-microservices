@@ -4,9 +4,11 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
 } from 'typeorm';
 
 @Entity({ name: 'products' })
+@Index('idx_products_not_deleted', ['isDeleted'])
 export class Product {
   @PrimaryGeneratedColumn()
   public id: number;
