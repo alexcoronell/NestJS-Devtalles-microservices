@@ -4,6 +4,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { HttpStatus, Injectable } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -54,7 +55,7 @@ export class ProductsService {
   async findOne(id: number): Promise<ResponseSingleProductDto> {
     const product = await this.productRepository.findOne({ where: { id } });
     if (!product) {
-      throw new Error('Product not found');
+      throw new RpcException(`Product with ${id} not found`);
     }
     return {
       statusCode: HttpStatus.OK,

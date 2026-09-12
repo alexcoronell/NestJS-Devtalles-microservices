@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -11,6 +13,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
+import { firstValueFrom } from 'rxjs';
 import { PaginationDto } from 'src/commons/dto/pagination.dto';
 import { PRODUCTS_SERVICE } from 'src/config';
 
@@ -34,8 +37,14 @@ export class ProductsController {
   }
 
   @Get(':id')
-  findProductById(@Param('id', ParseIntPipe) id: number) {
-    return `This action returns a product by id: ${id}`;
+  async findProductById(@Param('id', ParseIntPipe) id: number) {
+    try {
+      return await firstValueFrom(
+        this.productsClient.send({ cmd: 'find_product_by_id' }, { id }),
+      );
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
   }
 
   @Patch(':id')
