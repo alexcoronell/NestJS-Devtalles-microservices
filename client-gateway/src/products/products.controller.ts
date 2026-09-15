@@ -1,6 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -12,10 +10,13 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
-import { firstValueFrom } from 'rxjs';
+import { ClientProxy, RpcException } from '@nestjs/microservices';
+import { catchError } from 'rxjs';
 import { PaginationDto } from 'src/commons/dto/pagination.dto';
 import { PRODUCTS_SERVICE } from 'src/config';
+
+import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
 
 @Controller('products')
 export class ProductsController {
@@ -24,39 +25,52 @@ export class ProductsController {
   ) {}
 
   @Post()
-  createProduct(@Body() createProductDto: any) {
-    return `This action adds a new product with data: ${JSON.stringify(createProductDto)}`;
+  createProduct(@Body() createProductDto: CreateProductDto) {
+    return this.productsClient.send(
+      { cmd: 'create_product' },
+      createProductDto,
+    );
   }
 
   @Get()
   findAllProducts(@Query() paginationDto: PaginationDto) {
-    return this.productsClient.send(
-      { cmd: 'find_all_products' },
-      paginationDto,
-    );
+    return this.productsClient
+      .send({ cmd: 'find_all_products' }, paginationDto)
+      .pipe(
+        catchError((err: object) => {
+          throw new RpcException(err);
+        }),
+      );
   }
 
   @Get(':id')
-  async findProductById(@Param('id', ParseIntPipe) id: number) {
-    try {
-      return await firstValueFrom(
-        this.productsClient.send({ cmd: 'find_product_by_id' }, { id }),
-      );
-    } catch (error) {
-      throw new BadRequestException(error);
-    }
+  findProductById(@Param('id', ParseIntPipe) id: number) {
+    return this.productsClient.send({ cmd: 'find_product_by_id' }, { id }).pipe(
+      catchError((err: object) => {
+        throw new RpcException(err);
+      }),
+    );
   }
 
   @Patch(':id')
   updateProduct(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateProductDto: any,
+    @Body() updateProductDto: UpdateProductDto,
   ) {
-    return `This action updates a product by id: ${id}, with data: ${JSON.stringify(updateProductDto)}`;
+    const dto = { id, ...updateProductDto };
+    return this.productsClient.send({ cmd: 'update_product' }, dto).pipe(
+      catchError((err: object) => {
+        throw new RpcException(err);
+      }),
+    );
   }
 
   @Delete(':id')
   deleteProduct(@Param('id', ParseIntPipe) id: number) {
-    return `This action delete a product by id: ${id}`;
+    return this.productsClient.send({ cmd: 'delete_product' }, { id }).pipe(
+      catchError((err: object) => {
+        throw new RpcException(err);
+      }),
+    );
   }
 }

@@ -1,8 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { RpcException } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -53,9 +48,14 @@ export class ProductsService {
   }
 
   async findOne(id: number): Promise<ResponseSingleProductDto> {
-    const product = await this.productRepository.findOne({ where: { id } });
+    const product = await this.productRepository.findOne({
+      where: { id, isDeleted: false },
+    });
     if (!product) {
-      throw new RpcException(`Product with ${id} not found`);
+      throw new RpcException({
+        status: HttpStatus.NOT_FOUND,
+        message: `Product with id:${id} not found`,
+      });
     }
     return {
       statusCode: HttpStatus.OK,
@@ -68,10 +68,7 @@ export class ProductsService {
     updateProductDto: UpdateProductDto,
   ): Promise<ResponseSingleProductDto> {
     const { id, ...data } = updateProductDto;
-    const product = await this.productRepository.findOne({ where: { id } });
-    if (!product) {
-      throw new Error('Product not found');
-    }
+    const { data: product } = await this.findOne(id);
     Object.assign(product, data);
     const updatedProduct = await this.productRepository.save(product);
     return {
@@ -82,16 +79,13 @@ export class ProductsService {
   }
 
   async remove(id: number) {
-    const product = await this.productRepository.findOne({ where: { id } });
-    if (!product) {
-      throw new Error('Product not found');
-    }
+    const { data: product } = await this.findOne(id);
     const changes = {
       isDeleted: true,
       deletedAt: new Date(),
     };
 
-    this.productRepository.merge(product, changes);
+    Object.assign(product, changes);
     await this.productRepository.save(product);
     return {
       statusCode: HttpStatus.NO_CONTENT,
